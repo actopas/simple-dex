@@ -1,3 +1,10 @@
+/*
+ * @Describle:
+ * @Author: actopas <fishmooger@gmail.com>
+ * @Date: 2024-08-12 22:44:32
+ * @LastEditors: actopas
+ * @LastEditTime: 2024-08-12 23:18:39
+ */
 import React, { useState } from "react";
 import { Input, Select, Button } from "antd";
 import { DownCircleOutlined } from "@ant-design/icons";
@@ -61,7 +68,9 @@ const Home: React.FC = () => {
   return (
     <div className="w-screen h-screen flex justify-center items-center font-mono">
       <div className="h-1/2 w-full flex justify-around items-center flex-col">
-        <div className="font-bold text-3xl">A Decentralized Exchange</div>
+        <div className="font-bold text-3xl">
+          A Decentralized Exchange Platform
+        </div>
         <div className="w-full h-1/2 flex justify-around items-center flex-col">
           <div>
             <Input

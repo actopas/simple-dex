@@ -1,10 +1,17 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+/*
+ * @Describle:
+ * @Author: actopas <fishmooger@gmail.com>
+ * @Date: 2024-08-11 16:42:24
+ * @LastEditors: actopas
+ * @LastEditTime: 2024-08-11 22:55:11
+ */
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <App />

@@ -1,25 +1,15 @@
-import logo from './logo.svg';
-import './App.css';
+/*
+ * @Describle:
+ * @Author: sunmingyuan <fishmooger@gmail.com>
+ * @Date: 2024-08-11 16:42:24
+ * @LastEditors: actopas
+ * @LastEditTime: 2024-08-11 17:31:10
+ */
+import Home from "./pages/Home.tsx";
+import "./App.css";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  return <Home></Home>;
 }
 
 export default App;

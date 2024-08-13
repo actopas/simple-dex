@@ -3,7 +3,7 @@
  * @Author: actopas <fishmooger@gmail.com>
  * @Date: 2024-08-12 22:20:45
  * @LastEditors: actopas
- * @LastEditTime: 2024-08-13 13:19:14
+ * @LastEditTime: 2024-08-13 23:14:19
  */
 const MockPriceFeed = artifacts.require("MockPriceFeed");
 const TokenA = artifacts.require("TokenA");
@@ -17,5 +17,5 @@ module.exports = async function (deployer) {
   const tokenA = await TokenA.deployed();
   await deployer.deploy(TokenB, initialSupply);
   const tokenB = await TokenB.deployed();
-  await deployer.deploy(Dex);
+  await deployer.deploy(Dex, tokenA.address, tokenB.address);
 };

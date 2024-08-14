@@ -3,7 +3,7 @@
  * @Author: actopas <fishmooger@gmail.com>
  * @Date: 2024-08-12 22:44:32
  * @LastEditors: actopas
- * @LastEditTime: 2024-08-15 02:09:34
+ * @LastEditTime: 2024-08-15 03:21:37
  */
 import React, { useState, useEffect } from "react";
 import { Input, Select, Button, Tabs, Dropdown } from "antd";
@@ -43,9 +43,10 @@ const Home: React.FC = () => {
   const [targetCurrency, setTargetCurrency] = useState<string>(
     tokenList[1].address
   );
-  const [activeKey, setActiveKey] = useState("1");
-  const [minValue, setMinValue] = useState("");
-  const [maxValue, setMaxValue] = useState("");
+  const [activeKey, setActiveKey] = useState<string>("1");
+  const [lpToken, setLpToken] = useState<number>();
+  // const [minValue, setMinValue] = useState("");
+  // const [maxValue, setMaxValue] = useState("");
 
   const handleValueChange = async (
     scene: string,
@@ -172,18 +173,30 @@ const Home: React.FC = () => {
       console.error("添加流动性失败", error);
     }
   };
+  const handleExtractLpToken = async () => {
+    if (!sourceCurrency || !targetCurrency) return;
+    const LpInWei = toTokenUnit(lpToken || 0, tokenDecimals);
+    try {
+      const removeLiquidityResult = await contractDex.methods
+        .removeLiquidity(sourceCurrency, targetCurrency, LpInWei)
+        .send({ from: account });
+      console.log(removeLiquidityResult, "result");
+    } catch (error) {
+      console.log("移除流动性失败", error);
+    }
+  };
   function toTokenUnit(amount: number, decimals: number) {
     return amount * Math.pow(10, decimals);
   }
   const onChange = (key: string) => {
     setActiveKey(key);
   };
-  const handleSetMinValue = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setMinValue(event.target.value);
-  };
-  const handleSetMaxValue = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setMaxValue(event.target.value);
-  };
+  // const handleSetMinValue = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   setMinValue(event.target.value);
+  // };
+  // const handleSetMaxValue = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   setMaxValue(event.target.value);
+  // };
   const linkMetaMask = async () => {
     // 检查 MetaMask 是否已安装
     if (window.ethereum) {
@@ -286,7 +299,12 @@ const Home: React.FC = () => {
         onBlur={(event) => handleValueChange("source", event)}
         addonAfter={selectSource}
       />
-      <DownCircleOutlined className="text-3xl my-4" onClick={handleSwap} />
+      {activeKey === "1" ? (
+        <DownCircleOutlined className="text-3xl my-4" onClick={handleSwap} />
+      ) : (
+        <div className="mb-6"></div>
+      )}
+
       <Input
         size="large"
         value={targetValue}
@@ -296,7 +314,7 @@ const Home: React.FC = () => {
       />
       {activeKey === "2" ? (
         <>
-          <Input
+          {/* <Input
             className="mt-3"
             size="large"
             addonBefore={"Min"}
@@ -309,7 +327,7 @@ const Home: React.FC = () => {
             addonBefore={"Max"}
             value={maxValue}
             onChange={handleSetMaxValue}
-          />
+          /> */}
         </>
       ) : (
         ""
@@ -320,6 +338,22 @@ const Home: React.FC = () => {
       >
         {activeKey === "1" ? "SWAP" : "APPLY"}
       </Button>
+      {activeKey === "2" ? (
+        <>
+          <Input
+            className="mt-3"
+            size="large"
+            addonBefore={"LP"}
+            addonAfter={<p onClick={handleExtractLpToken}>Extract</p>}
+            value={lpToken}
+            onChange={(e) => {
+              setLpToken(Number(e.target.value));
+            }}
+          />
+        </>
+      ) : (
+        ""
+      )}
     </div>
   );
   const tabItems = [

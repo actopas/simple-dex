@@ -3,26 +3,95 @@
  * @Author: actopas <fishmooger@gmail.com>
  * @Date: 2024-08-12 22:44:32
  * @LastEditors: actopas
- * @LastEditTime: 2024-08-14 02:20:22
+ * @LastEditTime: 2024-08-15 00:47:46
  */
 import React, { useState, useEffect } from "react";
 import { Input, Select, Button, Tabs, Dropdown } from "antd";
 import { DownCircleOutlined } from "@ant-design/icons";
+import Dex from "../contracts/Dex.json";
+import TokenA from "../contracts/TokenA.json";
+import TokenB from "../contracts/TokenB.json";
 import Web3 from "web3";
+
+interface Token {
+  name: string;
+  address: string;
+}
 const { Option } = Select;
 const web3 = new Web3(window.ethereum);
+const tokenDecimals = 18;
+const dexAddress = "0x4B4Eea2bc7f623B6F468c29a12E14c6D7DD3CBFA";
+const tokenAAddress = "0x23376399E6C1a177EC283332DC7ec79F7be34526";
+const tokenBAddress = "0xb0d461B4FDb0Efac94A5d13B36FBdf9e6Bdd7d90";
+const tokenList: Token[] = [
+  { name: "tokenA", address: "0x23376399E6C1a177EC283332DC7ec79F7be34526" },
+  {
+    name: "tokenB",
+    address: "0xb0d461B4FDb0Efac94A5d13B36FBdf9e6Bdd7d90",
+  },
+];
+const contractDex = new web3.eth.Contract(Dex.abi, dexAddress);
+const contractTokenA = new web3.eth.Contract(TokenA.abi, tokenAAddress);
+const contractTokenB = new web3.eth.Contract(TokenB.abi, tokenBAddress);
 const Home: React.FC = () => {
-  const [account, setAccount] = useState<String>("");
-  const [abi, setAbi] = useState([]);
-  const [contract, setContract] = useState(null);
+  const [account, setAccount] = useState<string>("");
   const [sourceValue, setSourceValue] = useState<number>();
   const [targetValue, setTargetValue] = useState<number>();
-  const [sourceCurrency, setSourceCurrency] = useState<string>("ETH");
-  const [targetCurrency, setTargetCurrency] = useState<string>("ETH");
+  const [sourceCurrency, setSourceCurrency] = useState<string>(
+    tokenList[0].address
+  );
+  const [targetCurrency, setTargetCurrency] = useState<string>(
+    tokenList[1].address
+  );
   const [activeKey, setActiveKey] = useState("1");
   const [minValue, setMinValue] = useState("");
   const [maxValue, setMaxValue] = useState("");
 
+  const handleValueChange = async (
+    scene: string,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSourceValue(Number(event.target.value));
+    try {
+      const amountInWei = web3.utils.toWei(
+        event.target.value.toString(),
+        "ether"
+      );
+      const amountOut =
+        activeKey === "1"
+          ? scene === "source"
+            ? await contractDex.methods
+                .getAmountOut(amountInWei, sourceCurrency, targetCurrency)
+                .call()
+            : await contractDex.methods
+                .getAmountOut(amountInWei, targetCurrency, sourceCurrency)
+                .call()
+          : scene === "source"
+          ? await contractDex.methods
+              .calculateLiquidityToAdd(
+                sourceCurrency,
+                targetCurrency,
+                amountInWei
+              )
+              .call()
+          : await contractDex.methods.calculateLiquidityToAdd(
+              targetCurrency,
+              sourceCurrency,
+              amountInWei
+            );
+      if (amountOut) {
+        const amountOutFixed = parseFloat(
+          Number(web3.utils.fromWei(amountOut.toString(), "ether")).toFixed(2)
+        );
+        console.log(amountOut, amountOutFixed);
+        scene === "source"
+          ? setTargetValue(amountOutFixed)
+          : setSourceValue(amountOutFixed);
+      }
+    } catch (error) {
+      console.log(error, "error");
+    }
+  };
   const handleSourceValueChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -51,7 +120,61 @@ const Home: React.FC = () => {
     setTargetValue(tempValue);
     setTargetCurrency(tempCurrency);
   };
-  const handleExchange = () => {};
+  const handleExchange = async () => {
+    if (!sourceValue) return;
+    const amountInWei = web3.utils.toWei(sourceValue.toString(), "ether");
+    sourceCurrency === tokenAAddress
+      ? await contractTokenA.methods
+          .approve(dexAddress, amountInWei)
+          .send({ from: account })
+      : await contractTokenB.methods
+          .approve(dexAddress, amountInWei)
+          .send({ from: account });
+    try {
+      console.log(sourceCurrency, targetCurrency, amountInWei);
+      const exchange = await contractDex.methods
+        .swap(sourceCurrency, targetCurrency, amountInWei)
+        .send({ from: account });
+      console.log("交换成功", exchange);
+    } catch (error) {
+      console.error("交换失败", error);
+    }
+  };
+  const handleApplyLiquidity = async () => {
+    if (!sourceCurrency || !targetCurrency) return;
+
+    // 将代币数量从以太转换为Wei
+    const amountAInWei = toTokenUnit(sourceValue || 0, tokenDecimals);
+    const amountBInWei = toTokenUnit(targetValue || 0, tokenDecimals);
+
+    // 首先，需要为两种代币授权DEX合约操作这些代币
+    try {
+      console.log(sourceCurrency, targetCurrency, amountAInWei, amountBInWei);
+      await contractTokenA.methods
+        .approve(dexAddress, amountAInWei)
+        .send({ from: account });
+      await contractTokenB.methods
+        .approve(dexAddress, amountBInWei)
+        .send({ from: account });
+
+      // 调用DEX合约的addLiquidity方法
+      const liquidityResult = await contractDex.methods
+        .calculateLiquidityToAdd(
+          sourceCurrency,
+          targetCurrency,
+          amountAInWei,
+          amountBInWei
+        )
+        .send({ from: account });
+
+      console.log("流动性添加成功", liquidityResult);
+    } catch (error) {
+      console.error("添加流动性失败", error);
+    }
+  };
+  function toTokenUnit(amount: number, decimals: number) {
+    return amount * Math.pow(10, decimals);
+  }
   const onChange = (key: string) => {
     setActiveKey(key);
   };
@@ -125,23 +248,33 @@ const Home: React.FC = () => {
   }, []);
   const selectSource = (
     <Select
-      defaultValue="ETH"
+      defaultValue={tokenList[0].address}
       value={sourceCurrency}
       onChange={handleSourceCurrencyChange}
     >
-      <Option value="ETH">ETH</Option>
-      <Option value="BTC">BTC</Option>
+      {tokenList.map((item) => {
+        return (
+          <>
+            <Option value={item.address}>{item.name}</Option>
+          </>
+        );
+      })}
     </Select>
   );
 
   const selectTarget = (
     <Select
-      defaultValue="ETH"
+      defaultValue={tokenList[1].address}
       value={targetCurrency}
       onChange={handleTargetCurrencyChange}
     >
-      <Option value="ETH">ETH</Option>
-      <Option value="BTC">BTC</Option>
+      {tokenList.map((item) => {
+        return (
+          <>
+            <Option value={item.address}>{item.name}</Option>
+          </>
+        );
+      })}
     </Select>
   );
   const tabContent = (
@@ -150,6 +283,7 @@ const Home: React.FC = () => {
         size="large"
         value={sourceValue}
         onChange={handleSourceValueChange}
+        onBlur={(event) => handleValueChange("source", event)}
         addonAfter={selectSource}
       />
       <DownCircleOutlined className="text-3xl my-4" onClick={handleSwap} />
@@ -157,6 +291,7 @@ const Home: React.FC = () => {
         size="large"
         value={targetValue}
         onChange={handleTargetValueChange}
+        onBlur={(event) => handleValueChange("target", event)}
         addonAfter={selectTarget}
       />
       {activeKey === "2" ? (
@@ -179,8 +314,11 @@ const Home: React.FC = () => {
       ) : (
         ""
       )}
-      <Button className="w-[271px] mt-4" onClick={handleExchange}>
-        EXCHANGE
+      <Button
+        className="w-[301px] mt-4"
+        onClick={activeKey === "1" ? handleExchange : handleApplyLiquidity}
+      >
+        {activeKey === "1" ? "SWAP" : "APPLY"}
       </Button>
     </div>
   );

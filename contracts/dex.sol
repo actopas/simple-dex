@@ -10,7 +10,8 @@ contract DEX {
         bool isListed; // 代币是否已列入支持
     }
     mapping(address => TokenInfo) public tokenInfo;
-    uint public constantFee = 30;
+    uint public constant FEE_DENOMINATOR = 10000;
+    uint public constant FEE = 30; // 0.3%
 
     constructor(address _tokenAAddress, address _tokenBAddress) {
         tokenA = IERC20(_tokenAAddress);
@@ -20,12 +21,69 @@ contract DEX {
         tokenInfo[token] = TokenInfo(0, true);
     }
     // Liquidity
-    function addLiquidity(address token, uint256 amount) public {
-        require(tokenInfo[token].isListed, "Token not supported");
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
-        tokenInfo[token].reserve += amount;
+    function calculateLiquidityToAdd(
+        address token1,
+        address token2,
+        uint amountA
+    ) public view returns (uint amountB) {
+        require(
+            tokenInfo[token1].isListed && tokenInfo[token2].isListed,
+            "Token not supported"
+        );
+        uint reserveA = tokenInfo[token1].reserve;
+        uint reserveB = tokenInfo[token2].reserve;
+        require(reserveA > 0, "No liquidity for token A");
+        require(reserveB > 0, "No liquidity for token B");
+        amountB = (reserveB * amountA) / reserveA;
     }
 
+    function addLiquidity(
+        address token1,
+        address token2,
+        uint256 amountA,
+        uint256 amountB
+    ) public {
+        require(
+            tokenInfo[token1].isListed && tokenInfo[token2].isListed,
+            "Token not supported"
+        );
+        IERC20(token1).transferFrom(msg.sender, address(this), amountA);
+        IERC20(token2).transferFrom(msg.sender, address(this), amountB);
+
+        tokenInfo[token1].reserve += amountA;
+        tokenInfo[token2].reserve += amountB;
+
+        // LP token
+    }
+    function getReserves()
+        public
+        view
+        returns (uint256 reserveA, uint256 reserveB)
+    {
+        return (tokenInfo[tokenA].reserve, tokenInfo[tokenB].reserve);
+    }
+    function getAmountOut(
+        uint amountIn,
+        address tokenIn,
+        address tokenOut
+    ) public view returns (uint amountOut) {
+        require(
+            tokenInfo[tokenIn].isListed && tokenInfo[tokenOut].isListed,
+            "Token not supported"
+        );
+
+        uint reserveIn = tokenInfo[tokenIn].reserve;
+        uint reserveOut = tokenInfo[tokenOut].reserve;
+
+        require(amountIn > 0, "Invalid input amount");
+        require(reserveIn > 0 && reserveOut > 0, "Insufficient liquidity");
+
+        // 示例计算方法，忽略交易费用
+        uint amountInWithFee = amountIn * (FEE_DENOMINATOR - FEE);
+        amountOut =
+            (amountInWithFee * reserveOut) /
+            (reserveIn * FEE_DENOMINATOR + amountInWithFee);
+    }
     // function removeLiquidity() {}
     // swap
     function swap(address tokenIn, address tokenOut, uint256 amountIn) public {
@@ -40,7 +98,8 @@ contract DEX {
         uint256 inBalance = inInfo.reserve;
         uint256 outBalance = outInfo.reserve;
 
-        uint256 amountInWithFee = (amountIn * (10000 - constantFee)) / 10000;
+        uint256 amountInWithFee = (amountIn * (FEE_DENOMINATOR - FEE)) /
+            FEE_DENOMINATOR;
         uint256 amountOut = (amountInWithFee * outBalance) /
             (inBalance + amountInWithFee);
 

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+import "./LPToken.sol";
 contract DEX {
     IERC20 public tokenA;
     IERC20 public tokenB;
+    LPToken public lpToken;
     struct TokenInfo {
         uint256 reserve; // 代币的储备量
         bool isListed; // 代币是否已列入支持
@@ -13,9 +14,14 @@ contract DEX {
     uint public constant FEE_DENOMINATOR = 10000;
     uint public constant FEE = 30; // 0.3%
 
-    constructor(address _tokenAAddress, address _tokenBAddress) {
+    constructor(
+        address _tokenAAddress,
+        address _tokenBAddress,
+        address _lpTokenAddress
+    ) {
         tokenA = IERC20(_tokenAAddress);
         tokenB = IERC20(_tokenBAddress);
+        lpToken = LPToken(_lpTokenAddress);
     }
     function addToken(address token) public {
         tokenInfo[token] = TokenInfo(0, true);
@@ -54,13 +60,43 @@ contract DEX {
         tokenInfo[token2].reserve += amountB;
 
         // LP token
+        uint256 liquidity = calculateLiquidityTokens(amountA, amountB);
+        lpToken.mint(msg.sender, liquidity);
     }
-    function getReserves()
-        public
-        view
-        returns (uint256 reserveA, uint256 reserveB)
-    {
-        return (tokenInfo[tokenA].reserve, tokenInfo[tokenB].reserve);
+    function calculateLiquidityTokens(
+        uint256 amountA,
+        uint256 amountB
+    ) internal view returns (uint256) {
+        uint totalSupply = lpToken.totalSupply();
+        uint reserveA = tokenInfo[address(tokenA)].reserve;
+        uint reserveB = tokenInfo[address(tokenB)].reserve;
+
+        if (totalSupply == 0) {
+            return sqrt(amountA * amountB);
+        } else {
+            uint liquidityA = (amountA * totalSupply) / reserveA;
+            uint liquidityB = (amountB * totalSupply) / reserveB;
+            return (liquidityA < liquidityB) ? liquidityA : liquidityB;
+        }
+    }
+
+    function sqrt(uint y) internal pure returns (uint z) {
+        if (y > 3) {
+            z = y;
+            uint x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+    }
+    function getReserves(
+        address token1,
+        address token2
+    ) public view returns (uint256 reserveA, uint256 reserveB) {
+        return (tokenInfo[token1].reserve, tokenInfo[token2].reserve);
     }
     function getAmountOut(
         uint amountIn,

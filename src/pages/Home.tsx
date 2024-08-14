@@ -3,7 +3,7 @@
  * @Author: actopas <fishmooger@gmail.com>
  * @Date: 2024-08-12 22:44:32
  * @LastEditors: actopas
- * @LastEditTime: 2024-08-15 00:47:46
+ * @LastEditTime: 2024-08-15 02:09:34
  */
 import React, { useState, useEffect } from "react";
 import { Input, Select, Button, Tabs, Dropdown } from "antd";
@@ -20,14 +20,14 @@ interface Token {
 const { Option } = Select;
 const web3 = new Web3(window.ethereum);
 const tokenDecimals = 18;
-const dexAddress = "0x4B4Eea2bc7f623B6F468c29a12E14c6D7DD3CBFA";
-const tokenAAddress = "0x23376399E6C1a177EC283332DC7ec79F7be34526";
-const tokenBAddress = "0xb0d461B4FDb0Efac94A5d13B36FBdf9e6Bdd7d90";
+const dexAddress = "0x6cB1B675964E5356f740C8377eEb4c0Bf5389562";
+const tokenAAddress = "0x2616F95f1892164B96cED6ff5F945595f5D52852";
+const tokenBAddress = "0x5B54A807af02DAE128c4A224e8eBD26ec6ACE18d";
 const tokenList: Token[] = [
-  { name: "tokenA", address: "0x23376399E6C1a177EC283332DC7ec79F7be34526" },
+  { name: "tokenA", address: "0x2616F95f1892164B96cED6ff5F945595f5D52852" },
   {
     name: "tokenB",
-    address: "0xb0d461B4FDb0Efac94A5d13B36FBdf9e6Bdd7d90",
+    address: "0x5B54A807af02DAE128c4A224e8eBD26ec6ACE18d",
   },
 ];
 const contractDex = new web3.eth.Contract(Dex.abi, dexAddress);
@@ -159,7 +159,7 @@ const Home: React.FC = () => {
 
       // 调用DEX合约的addLiquidity方法
       const liquidityResult = await contractDex.methods
-        .calculateLiquidityToAdd(
+        .addLiquidity(
           sourceCurrency,
           targetCurrency,
           amountAInWei,

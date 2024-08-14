@@ -47,7 +47,12 @@ contract DEX {
         tokenInfo[token2].reserve += amountB;
 
         // LP token
-        uint256 liquidity = calculateLiquidityTokens(token1, token2, amountA, amountB);
+        uint256 liquidity = calculateLiquidityTokens(
+            token1,
+            token2,
+            amountA,
+            amountB
+        );
         lpToken.mint(msg.sender, liquidity);
     }
 
@@ -99,7 +104,7 @@ contract DEX {
 
     function calculateLiquidityTokens(
         address token1,
-        address token2
+        address token2,
         uint256 amountA,
         uint256 amountB
     ) internal view returns (uint256) {

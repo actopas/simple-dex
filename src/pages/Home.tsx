@@ -3,7 +3,7 @@
  * @Author: actopas <fishmooger@gmail.com>
  * @Date: 2024-08-12 22:44:32
  * @LastEditors: actopas
- * @LastEditTime: 2024-08-15 03:21:37
+ * @LastEditTime: 2024-08-15 06:02:52
  */
 import React, { useState, useEffect } from "react";
 import { Input, Select, Button, Tabs, Dropdown } from "antd";
@@ -20,14 +20,14 @@ interface Token {
 const { Option } = Select;
 const web3 = new Web3(window.ethereum);
 const tokenDecimals = 18;
-const dexAddress = "0x6cB1B675964E5356f740C8377eEb4c0Bf5389562";
-const tokenAAddress = "0x2616F95f1892164B96cED6ff5F945595f5D52852";
-const tokenBAddress = "0x5B54A807af02DAE128c4A224e8eBD26ec6ACE18d";
+const dexAddress = "0xefB1cA0CE86fC26Eaca259623640A82781789145";
+const tokenAAddress = "0x10e4e08FfCE86da178Fbfb6a6927B2e4e0837fad";
+const tokenBAddress = "0x7aB57EabD2AF38BDafbd50b9F5ad6d3E96D7B53b";
 const tokenList: Token[] = [
-  { name: "tokenA", address: "0x2616F95f1892164B96cED6ff5F945595f5D52852" },
+  { name: "tokenA", address: "0x10e4e08FfCE86da178Fbfb6a6927B2e4e0837fad" },
   {
     name: "tokenB",
-    address: "0x5B54A807af02DAE128c4A224e8eBD26ec6ACE18d",
+    address: "0x7aB57EabD2AF38BDafbd50b9F5ad6d3E96D7B53b",
   },
 ];
 const contractDex = new web3.eth.Contract(Dex.abi, dexAddress);

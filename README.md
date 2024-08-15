@@ -1,70 +1,135 @@
-# Getting Started with Create React App
+<!--
+ * @Describle:
+ * @Author: actopas <fishmooger@gmail.com>
+ * @Date: 2024-08-12 22:44:32
+ * @LastEditors: actopas
+ * @LastEditTime: 2024-08-16 00:15:14
+-->
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Simple DEX
 
-## Available Scripts
+A decentralized exchange (DEX) built using React, Solidity, Truffle, and Ganache. This project demonstrates how to create a simple DEX on the Ethereum blockchain with a frontend powered by React.
 
-In the project directory, you can run:
+## Table of Contents
 
-### `npm start`
+- [Introduction](#introduction)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Running the Project](#running-the-project)
+- [Interacting with the DEX](#interacting-with-the-dex)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Introduction
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+This project is a simple decentralized exchange (DEX) that allows users to swap between two tokens, provide liquidity, and remove liquidity. The DEX is built on the Ethereum blockchain using Solidity for smart contracts and React for the frontend.
 
-### `npm test`
+## Features
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **Token Swap**: Users can swap between two ERC-20 tokens.
+- **Add Liquidity**: Users can provide liquidity to the pool and receive LP tokens.
+- **Remove Liquidity**: Users can remove liquidity and redeem their LP tokens.
+- **Responsive UI**: A user-friendly interface built with React.
 
-### `npm run build`
+## Project Structure
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```plaintext
+├── client               # React frontend
+│   ├── public           # Public files
+│   └── src              # React source code
+│       ├── pages        # frontend pages
+│       ├── App.js       # Main app component
+│       └── index.js     # React entry point
+├── contracts            # Solidity smart contracts
+├── migrations           # Truffle migrations
+├── test                 # Truffle tests
+├── truffle-config.js    # Truffle configuration
+└── README.md            # Project documentation
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Installation
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Prerequisites
 
-### `npm run eject`
+- Node.js and npm
+- Truffle
+- Ganache
+- MetaMask (or any Ethereum wallet browser extension)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Steps
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. **Clone the repository**:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```
+git clone https://github.com/actopas/simple-dex.git
+cd simple-dex
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+2. **Install dependencies**:
 
-## Learn More
+```
+npm install
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+3. **Start Ganache**:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```
+ganache
+```
 
-### Code Splitting
+- Start Ganache and make sure it runs on the default port `8545`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+4. **Compile and deploy the smart contracts then init it**:
 
-### Analyzing the Bundle Size
+```
+truffle compile
+truffle migrate --reset
+truffle exec ./scripts/init_dex.js
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+5. **Copy the buid\contracts TokenA and B and Dex Contract JSON file to src/contracts then copy the addressA and B and Dex to the pages/home inside**
+6. **Start the React frontend**:
 
-### Making a Progressive Web App
+```
+npm start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+The app will be available at `http://localhost:3000`.
 
-### Advanced Configuration
+## Running the Project
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+1. **Ensure Ganache is running** and connected to the correct network.
 
-### Deployment
+2. **Run Truffle migrations then init it** to deploy the contracts to your local blockchain:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```
+truffle migrate --reset
+truffle exec ./scripts/init_dex.js
+```
 
-### `npm run build` fails to minify
+3. **Copy the buid\contracts TokenA and B and Dex Contract JSON file to src/contracts then copy the addressA and B and Dex to the pages/home inside**
+4. **Start the React development server**:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```
+npm start
+```
+
+Open `http://localhost:3000` in your browser to view the app.
+
+## Interacting with the DEX
+
+- **Connect MetaMask**: Ensure MetaMask is connected to the same network as Ganache.
+- **Add Liquidity**: Use the interface to add liquidity to the pool.
+- **Swap Tokens**: Swap between the available tokens.
+- **Remove Liquidity**: Redeem your LP tokens and withdraw your liquidity.
+
+## Troubleshooting
+
+- **Contracts not deploying**: Ensure Ganache is running and Truffle is connected to the correct network.
+- **MetaMask issues**: Make sure MetaMask is connected to the Ganache network and the correct account is selected.
+- **Frontend not updating**: Check the browser console for errors, and ensure the React app is properly connected to the blockchain.
+
+## License
+
+**This project is licensed under the MIT License - see the LICENSE file for details.**

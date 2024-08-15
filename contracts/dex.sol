@@ -19,7 +19,7 @@ contract DEX is Ownable {
         address _tokenAAddress,
         address _tokenBAddress,
         address _lpTokenAddress
-    ) {
+    ) Ownable(msg.sender) {
         tokenA = IERC20(_tokenAAddress);
         tokenB = IERC20(_tokenBAddress);
         lpToken = LPToken(_lpTokenAddress);

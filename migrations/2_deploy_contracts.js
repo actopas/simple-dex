@@ -3,9 +3,8 @@
  * @Author: actopas <fishmooger@gmail.com>
  * @Date: 2024-08-12 22:20:45
  * @LastEditors: actopas
- * @LastEditTime: 2024-08-15 06:24:12
+ * @LastEditTime: 2024-08-15 16:52:49
  */
-import { deployProxy } from "@openzeppelin/hardhat-upgrades";
 const TokenA = artifacts.require("TokenA");
 const TokenB = artifacts.require("TokenB");
 const LPToken = artifacts.require("LPToken");
@@ -19,10 +18,7 @@ module.exports = async function (deployer) {
   const tokenA = await TokenA.deployed();
   await deployer.deploy(TokenB, initialSupply);
   const tokenB = await TokenB.deployed();
-  const dex = await deployProxy(Dex, [
-    tokenA.address,
-    tokenB.address,
-    lpToken.address,
-  ]);
+  await deployer.deploy(Dex, tokenA.address, tokenB.address, lpToken.address);
+  const dex = await Dex.deployed();
   await lpToken.setAdmin(dex.address);
 };

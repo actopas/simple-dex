@@ -3,7 +3,7 @@
  * @Author: actopas <fishmooger@gmail.com>
  * @Date: 2024-08-12 22:44:32
  * @LastEditors: actopas
- * @LastEditTime: 2024-08-15 15:44:32
+ * @LastEditTime: 2024-08-15 17:16:45
  */
 import React, { useState, useEffect } from "react";
 import {
@@ -31,14 +31,14 @@ type NotificationType = "success" | "info" | "warning" | "error";
 const { Option } = Select;
 const web3 = new Web3(window.ethereum);
 const tokenDecimals = 18;
-const dexAddress = "0xefB1cA0CE86fC26Eaca259623640A82781789145";
-const tokenAAddress = "0x10e4e08FfCE86da178Fbfb6a6927B2e4e0837fad";
-const tokenBAddress = "0x7aB57EabD2AF38BDafbd50b9F5ad6d3E96D7B53b";
+const dexAddress = "0xe3ac6dC1cab8B20f362c4299bB8A9f6c5De88A6F";
+const tokenAAddress = "0x8D53EC07411aeb9A61A9d92f0e72A0ADC59Ae833";
+const tokenBAddress = "0x7c60DB5C067F3eAf5f3618D39736c00D8071c153";
 const tokenList: Token[] = [
-  { name: "tokenA", address: "0x10e4e08FfCE86da178Fbfb6a6927B2e4e0837fad" },
+  { name: "tokenA", address: "0x8D53EC07411aeb9A61A9d92f0e72A0ADC59Ae833" },
   {
     name: "tokenB",
-    address: "0x7aB57EabD2AF38BDafbd50b9F5ad6d3E96D7B53b",
+    address: "0x7c60DB5C067F3eAf5f3618D39736c00D8071c153",
   },
 ];
 const contractDex = new web3.eth.Contract(Dex.abi, dexAddress);
@@ -75,7 +75,7 @@ const Home: React.FC = () => {
         event.target.value.toString(),
         "ether"
       );
-      console.log(sourceCurrency, targetCurrency, "seecurrency");
+      console.log(sourceCurrency, targetCurrency, amountInWei, "seecurrency");
       const amountOut =
         activeKey === "1"
           ? scene === "source"

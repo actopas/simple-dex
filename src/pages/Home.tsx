@@ -3,7 +3,7 @@
  * @Author: actopas <fishmooger@gmail.com>
  * @Date: 2024-08-12 22:44:32
  * @LastEditors: actopas
- * @LastEditTime: 2024-08-15 10:10:50
+ * @LastEditTime: 2024-08-15 15:44:32
  */
 import React, { useState, useEffect } from "react";
 import {
@@ -15,7 +15,8 @@ import {
   Alert,
   notification,
 } from "antd";
-import { DownCircleOutlined } from "@ant-design/icons";
+import { DownOutlined } from "@ant-design/icons";
+import backgroundImage from "../assets/bcg-img.jpg";
 import Dex from "../contracts/Dex.json";
 import TokenA from "../contracts/TokenA.json";
 import TokenB from "../contracts/TokenB.json";
@@ -140,11 +141,11 @@ const Home: React.FC = () => {
   //   setTargetValue(tempValue);
   //   setTargetCurrency(tempCurrency);
   // };
-  const handleExchange = async () => {
+  const handleSwap = async () => {
     if (!sourceValue) return;
     if (sourceCurrency === targetCurrency) return;
     if (!account) {
-      return openNotification("warning", "Please Login first", "");
+      return openNotification("warning", "Please Connect Wallet first", "");
     }
     const amountInWei = web3.utils.toWei(sourceValue.toString(), "ether");
     sourceCurrency === tokenAAddress
@@ -169,7 +170,7 @@ const Home: React.FC = () => {
   const handleAddLiquidity = async () => {
     if (!sourceCurrency || !targetCurrency) return;
     if (!account) {
-      return openNotification("warning", "Please Login first", "");
+      return openNotification("warning", "Please Connect Wallet first", "");
     }
     // 将代币数量从以太转换为Wei
     const amountAInWei = toTokenUnit(sourceValue || 0, tokenDecimals);
@@ -204,7 +205,7 @@ const Home: React.FC = () => {
   const handleRemoveLiquidity = async () => {
     if (!sourceCurrency || !targetCurrency) return;
     if (!account) {
-      return openNotification("warning", "Please Login first", "");
+      return openNotification("warning", "Please Connect Wallet first", "");
     }
     const LpInWei = toTokenUnit(lpToken || 0, tokenDecimals);
     try {
@@ -348,7 +349,7 @@ const Home: React.FC = () => {
         addonAfter={selectSource}
       />
       {activeKey === "1" ? (
-        <DownCircleOutlined className="text-3xl my-4" />
+        <DownOutlined className="text-3xl my-4" />
       ) : (
         <div className="mb-6"></div>
       )}
@@ -392,10 +393,10 @@ const Home: React.FC = () => {
         ""
       )}
       <Button
-        className="w-[288px] mt-4"
-        onClick={activeKey === "1" ? handleExchange : handleAddLiquidity}
+        className="w-[300px] mt-4"
+        onClick={activeKey === "1" ? handleSwap : handleAddLiquidity}
       >
-        {activeKey === "1" ? "SWAP" : "APPLY"}
+        {activeKey === "1" ? "SWAP" : "ADD LIQUIDITY"}
       </Button>
       {activeKey === "2" ? (
         <>
@@ -405,7 +406,11 @@ const Home: React.FC = () => {
             type="number"
             step="any"
             addonBefore={"LP"}
-            addonAfter={<p onClick={handleRemoveLiquidity}>Extract</p>}
+            addonAfter={
+              <p className="cursor-pointer" onClick={handleRemoveLiquidity}>
+                Extract
+              </p>
+            }
             value={lpToken}
             onChange={(e) => {
               setLpToken(Number(e.target.value));
@@ -419,18 +424,21 @@ const Home: React.FC = () => {
   );
   const tabItems = [
     {
-      label: "Exchange",
+      label: "Swap",
       key: "1",
       children: activeKey === "1" ? tabContent : "",
     },
     {
-      label: "Liquidity",
+      label: "Pool",
       key: "2",
       children: activeKey === "2" ? tabContent : "",
     },
   ];
   return (
-    <div className="w-screen h-screen flex items-center flex-col font-mono">
+    <div
+      className="w-screen h-screen flex items-center flex-col font-mono bg-cover bg-center"
+      style={{ backgroundImage: `url(${backgroundImage})` }}
+    >
       {contextHolder}
       <div className="w-screen h-14 flex justify-end items-center pl-4 pr-4">
         {!account ? (
@@ -450,13 +458,13 @@ const Home: React.FC = () => {
           </div>
         )}
       </div>
-      <div className="h-1/2 w-full flex justify-around items-center flex-col">
-        <div className="font-bold text-3xl">
-          A Decentralized Exchange Platform
+      <div className="h-2/3 w-full flex justify-around items-center flex-col">
+        <div className="h-full font-bold text-3xl flex justify-center items-center">
+          A Decentralized Swap Platform
         </div>
-        <div className="w-full h-1/2 flex justify-around items-center flex-col">
+        <div className="w-full h-full flex justify-around items-center flex-col">
           <Tabs
-            className="w-[300px]"
+            className="w-[350px] min-h-[300px] bg-white p-[20px] rounded-3xl"
             onChange={handleTabChange}
             type="card"
             items={tabItems}

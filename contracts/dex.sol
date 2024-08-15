@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./LPToken.sol";
-contract DEX {
+contract DEX is Ownable {
     IERC20 public tokenA;
     IERC20 public tokenB;
     LPToken public lpToken;
@@ -24,7 +25,8 @@ contract DEX {
         lpToken = LPToken(_lpTokenAddress);
     }
 
-    function addToken(address token) public {
+    function addToken(address token) public onlyOwner {
+        require(!tokenInfo[token].isListed, "Token already listed");
         tokenInfo[token] = TokenInfo(0, true);
     }
 
@@ -40,6 +42,18 @@ contract DEX {
             tokenInfo[token1].isListed && tokenInfo[token2].isListed,
             "Token not supported"
         );
+        require(amountA > 0 && amountB > 0, "Invalid token amounts");
+
+        // 检查代币是否有足够的流动性
+        require(
+            tokenInfo[token1].reserve + amountA > tokenInfo[token1].reserve,
+            "Overflow risk for token1"
+        );
+        require(
+            tokenInfo[token2].reserve + amountB > tokenInfo[token2].reserve,
+            "Overflow risk for token2"
+        );
+
         IERC20(token1).transferFrom(msg.sender, address(this), amountA);
         IERC20(token2).transferFrom(msg.sender, address(this), amountB);
 
@@ -74,6 +88,8 @@ contract DEX {
         uint256 amountA = (lpTokenAmount * reserveA) / totalLpSupply;
         uint256 amountB = (lpTokenAmount * reserveB) / totalLpSupply;
 
+        require(tokenInfo[token1].reserve >= amountA, "Insufficient reserveA");
+        require(tokenInfo[token2].reserve >= amountB, "Insufficient reserveB");
         // 更新储备量
         tokenInfo[token1].reserve -= amountA;
         tokenInfo[token2].reserve -= amountB;
@@ -148,6 +164,8 @@ contract DEX {
             tokenInfo[tokenIn].isListed && tokenInfo[tokenOut].isListed,
             "One or both tokens not supported"
         );
+        // 检查输入金额的合理性
+        require(amountIn > 0, "Invalid input amount");
 
         TokenInfo storage inInfo = tokenInfo[tokenIn];
         TokenInfo storage outInfo = tokenInfo[tokenOut];
@@ -159,6 +177,13 @@ contract DEX {
             FEE_DENOMINATOR;
         uint256 amountOut = (amountInWithFee * outBalance) /
             (inBalance + amountInWithFee);
+
+        // 检查是否有足够的储备支付 amountOut
+        require(amountOut <= outBalance, "Insufficient liquidity for tokenOut");
+
+        // 检查 amountOut 是否为合理值
+        require(amountOut > 0, "Invalid output amount");
+
         uint256 fee = amountIn - amountInWithFee;
         inInfo.reserve += amountInWithFee + fee;
         outInfo.reserve -= amountOut;
@@ -183,8 +208,8 @@ contract DEX {
         require(amountIn > 0, "Invalid input amount");
         require(reserveIn > 0 && reserveOut > 0, "Insufficient liquidity");
 
-        // 示例计算方法，忽略交易费用
-        uint amountInWithFee = (amountIn * (FEE_DENOMINATOR - FEE)) /
+        // 计算考虑交易费用后的实际输入金额
+        uint256 amountInWithFee = (amountIn * (FEE_DENOMINATOR - FEE)) /
             FEE_DENOMINATOR;
         amountOut =
             (amountInWithFee * reserveOut) /

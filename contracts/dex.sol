@@ -184,7 +184,8 @@ contract DEX {
         require(reserveIn > 0 && reserveOut > 0, "Insufficient liquidity");
 
         // 示例计算方法，忽略交易费用
-        uint amountInWithFee = amountIn * (FEE_DENOMINATOR - FEE);
+        uint amountInWithFee = (amountIn * (FEE_DENOMINATOR - FEE)) /
+            FEE_DENOMINATOR;
         amountOut =
             (amountInWithFee * reserveOut) /
             (reserveIn * FEE_DENOMINATOR + amountInWithFee);

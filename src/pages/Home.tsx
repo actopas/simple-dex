@@ -3,10 +3,18 @@
  * @Author: actopas <fishmooger@gmail.com>
  * @Date: 2024-08-12 22:44:32
  * @LastEditors: actopas
- * @LastEditTime: 2024-08-15 06:02:52
+ * @LastEditTime: 2024-08-15 10:10:50
  */
 import React, { useState, useEffect } from "react";
-import { Input, Select, Button, Tabs, Dropdown } from "antd";
+import {
+  Input,
+  Select,
+  Button,
+  Tabs,
+  Dropdown,
+  Alert,
+  notification,
+} from "antd";
 import { DownCircleOutlined } from "@ant-design/icons";
 import Dex from "../contracts/Dex.json";
 import TokenA from "../contracts/TokenA.json";
@@ -17,6 +25,8 @@ interface Token {
   name: string;
   address: string;
 }
+type NotificationType = "success" | "info" | "warning" | "error";
+
 const { Option } = Select;
 const web3 = new Web3(window.ethereum);
 const tokenDecimals = 18;
@@ -34,6 +44,7 @@ const contractDex = new web3.eth.Contract(Dex.abi, dexAddress);
 const contractTokenA = new web3.eth.Contract(TokenA.abi, tokenAAddress);
 const contractTokenB = new web3.eth.Contract(TokenB.abi, tokenBAddress);
 const Home: React.FC = () => {
+  const [api, contextHolder] = notification.useNotification();
   const [account, setAccount] = useState<string>("");
   const [sourceValue, setSourceValue] = useState<number>();
   const [targetValue, setTargetValue] = useState<number>();
@@ -52,12 +63,18 @@ const Home: React.FC = () => {
     scene: string,
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setSourceValue(Number(event.target.value));
+    if (sourceCurrency === targetCurrency) return;
+    if (
+      (scene === "source" && !sourceValue) ||
+      (scene === "target" && !targetValue)
+    )
+      return;
     try {
       const amountInWei = web3.utils.toWei(
         event.target.value.toString(),
         "ether"
       );
+      console.log(sourceCurrency, targetCurrency, "seecurrency");
       const amountOut =
         activeKey === "1"
           ? scene === "source"
@@ -75,11 +92,13 @@ const Home: React.FC = () => {
                 amountInWei
               )
               .call()
-          : await contractDex.methods.calculateLiquidityToAdd(
-              targetCurrency,
-              sourceCurrency,
-              amountInWei
-            );
+          : await contractDex.methods
+              .calculateLiquidityToAdd(
+                targetCurrency,
+                sourceCurrency,
+                amountInWei
+              )
+              .call();
       if (amountOut) {
         const amountOutFixed = parseFloat(
           Number(web3.utils.fromWei(amountOut.toString(), "ether")).toFixed(2)
@@ -110,19 +129,23 @@ const Home: React.FC = () => {
   const handleTargetCurrencyChange = (value: string) => {
     setTargetCurrency(value);
   };
-  const handleSwap = () => {
-    // 交换 source 和 target 的值
-    const tempValue = sourceValue;
-    const tempCurrency = sourceCurrency;
+  // const handleSwap = () => {
+  //   // 交换 source 和 target 的值
+  //   const tempValue = sourceValue;
+  //   const tempCurrency = sourceCurrency;
 
-    setSourceValue(targetValue);
-    setSourceCurrency(targetCurrency);
+  //   setSourceValue(targetValue);
+  //   setSourceCurrency(targetCurrency);
 
-    setTargetValue(tempValue);
-    setTargetCurrency(tempCurrency);
-  };
+  //   setTargetValue(tempValue);
+  //   setTargetCurrency(tempCurrency);
+  // };
   const handleExchange = async () => {
     if (!sourceValue) return;
+    if (sourceCurrency === targetCurrency) return;
+    if (!account) {
+      return openNotification("warning", "Please Login first", "");
+    }
     const amountInWei = web3.utils.toWei(sourceValue.toString(), "ether");
     sourceCurrency === tokenAAddress
       ? await contractTokenA.methods
@@ -136,14 +159,18 @@ const Home: React.FC = () => {
       const exchange = await contractDex.methods
         .swap(sourceCurrency, targetCurrency, amountInWei)
         .send({ from: account });
+      openNotification("success", "Swap success", "");
       console.log("交换成功", exchange);
     } catch (error) {
+      openNotification("error", "Swap failed", error);
       console.error("交换失败", error);
     }
   };
-  const handleApplyLiquidity = async () => {
+  const handleAddLiquidity = async () => {
     if (!sourceCurrency || !targetCurrency) return;
-
+    if (!account) {
+      return openNotification("warning", "Please Login first", "");
+    }
     // 将代币数量从以太转换为Wei
     const amountAInWei = toTokenUnit(sourceValue || 0, tokenDecimals);
     const amountBInWei = toTokenUnit(targetValue || 0, tokenDecimals);
@@ -167,29 +194,37 @@ const Home: React.FC = () => {
           amountBInWei
         )
         .send({ from: account });
-
+      openNotification("success", "Add liquidity success", "");
       console.log("流动性添加成功", liquidityResult);
     } catch (error) {
-      console.error("添加流动性失败", error);
+      openNotification("error", "Add liquidity failed", error);
+      console.error("Add liquidity failed", error);
     }
   };
-  const handleExtractLpToken = async () => {
+  const handleRemoveLiquidity = async () => {
     if (!sourceCurrency || !targetCurrency) return;
+    if (!account) {
+      return openNotification("warning", "Please Login first", "");
+    }
     const LpInWei = toTokenUnit(lpToken || 0, tokenDecimals);
     try {
       const removeLiquidityResult = await contractDex.methods
         .removeLiquidity(sourceCurrency, targetCurrency, LpInWei)
         .send({ from: account });
+      openNotification("success", "Remove liquidity success", "");
       console.log(removeLiquidityResult, "result");
     } catch (error) {
+      openNotification("error", "Remove liquidity failed", error);
       console.log("移除流动性失败", error);
     }
   };
   function toTokenUnit(amount: number, decimals: number) {
     return amount * Math.pow(10, decimals);
   }
-  const onChange = (key: string) => {
+  const handleTabChange = (key: string) => {
     setActiveKey(key);
+    setSourceValue(undefined);
+    setTargetValue(undefined);
   };
   // const handleSetMinValue = (event: React.ChangeEvent<HTMLInputElement>) => {
   //   setMinValue(event.target.value);
@@ -211,6 +246,7 @@ const Home: React.FC = () => {
         setAccount(account);
         localStorage.setItem("userAddress", account);
       } catch (error) {
+        openNotification("error", "User denied account access", error);
         console.error(error, "User denied account access");
       }
     } else if (window.web3) {
@@ -230,6 +266,16 @@ const Home: React.FC = () => {
   const disconnectAccount = () => {
     setAccount("");
     localStorage.removeItem("userAccount");
+  };
+  const openNotification = (
+    type: NotificationType,
+    message: string,
+    description: any
+  ) => {
+    api[type]({
+      message,
+      description,
+    });
   };
   useEffect(() => {
     if (window.ethereum) {
@@ -294,24 +340,37 @@ const Home: React.FC = () => {
     <div className="flex flex-col items-center w-full">
       <Input
         size="large"
+        type="number"
+        step="any"
         value={sourceValue}
         onChange={handleSourceValueChange}
         onBlur={(event) => handleValueChange("source", event)}
         addonAfter={selectSource}
       />
       {activeKey === "1" ? (
-        <DownCircleOutlined className="text-3xl my-4" onClick={handleSwap} />
+        <DownCircleOutlined className="text-3xl my-4" />
       ) : (
         <div className="mb-6"></div>
       )}
 
       <Input
         size="large"
+        type="number"
+        step="any"
         value={targetValue}
         onChange={handleTargetValueChange}
         onBlur={(event) => handleValueChange("target", event)}
         addonAfter={selectTarget}
       />
+      {sourceCurrency === targetCurrency ? (
+        <Alert
+          className="mt-3"
+          message="Source Token can not same with Target Token"
+          type="error"
+        />
+      ) : (
+        ""
+      )}
       {activeKey === "2" ? (
         <>
           {/* <Input
@@ -333,8 +392,8 @@ const Home: React.FC = () => {
         ""
       )}
       <Button
-        className="w-[301px] mt-4"
-        onClick={activeKey === "1" ? handleExchange : handleApplyLiquidity}
+        className="w-[288px] mt-4"
+        onClick={activeKey === "1" ? handleExchange : handleAddLiquidity}
       >
         {activeKey === "1" ? "SWAP" : "APPLY"}
       </Button>
@@ -343,8 +402,10 @@ const Home: React.FC = () => {
           <Input
             className="mt-3"
             size="large"
+            type="number"
+            step="any"
             addonBefore={"LP"}
-            addonAfter={<p onClick={handleExtractLpToken}>Extract</p>}
+            addonAfter={<p onClick={handleRemoveLiquidity}>Extract</p>}
             value={lpToken}
             onChange={(e) => {
               setLpToken(Number(e.target.value));
@@ -370,6 +431,7 @@ const Home: React.FC = () => {
   ];
   return (
     <div className="w-screen h-screen flex items-center flex-col font-mono">
+      {contextHolder}
       <div className="w-screen h-14 flex justify-end items-center pl-4 pr-4">
         {!account ? (
           <Button className="" onClick={linkMetaMask}>
@@ -393,7 +455,12 @@ const Home: React.FC = () => {
           A Decentralized Exchange Platform
         </div>
         <div className="w-full h-1/2 flex justify-around items-center flex-col">
-          <Tabs onChange={onChange} type="card" items={tabItems} />
+          <Tabs
+            className="w-[300px]"
+            onChange={handleTabChange}
+            type="card"
+            items={tabItems}
+          />
         </div>
       </div>
     </div>
